@@ -6,7 +6,7 @@ WORKDIR /app
 COPY . /app
 
 # Install deps
-RUN pip install --no-cache-dir -r server/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Run server
 CMD ["sh", "-c", "uvicorn server.app:app --host 0.0.0.0 --port 7860"]
