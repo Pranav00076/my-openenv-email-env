@@ -1,0 +1,11 @@
+text,label,has_link,urgency
+Win a free iPhone!!!,spam,1,0.9
+Meeting at 5 PM,important,0,0.8
+URGENT: Verify your bank account,spam,1,1.0
+Client feedback attached,important,0,0.6
+Limited time offer!!!,spam,1,0.7
+Project deadline moved,important,0,0.9
+Final notice: account suspended,spam,1,1.0
+Invoice attached,important,0,0.7
+Reminder: subscription expires soon,important,1,0.6
+Click here to claim lottery,spam,1,1.0

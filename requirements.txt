@@ -1,0 +1,8 @@
+git+https://github.com/meta-pytorch/openenv.git
+fastapi>=0.115.0
+uvicorn>=0.24.0
+fastapi>=0.115.0
+uvicorn>=0.24.0
+
+
+
