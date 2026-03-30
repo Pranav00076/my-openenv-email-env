@@ -32,6 +32,10 @@ app = create_app(
 def root():
     return RedirectResponse(url="/docs")
 
+@app.get("/web")
+def web_redirect():
+    return RedirectResponse(url="/docs")
+
 
 def main(host: str = "0.0.0.0", port: int = 8000):
     import uvicorn
