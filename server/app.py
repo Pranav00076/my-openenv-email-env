@@ -26,6 +26,10 @@ app = create_app(
 # ✅ Create separate router (IMPORTANT)
 ui_router = APIRouter()
 
+@app.get("/web")
+def web():
+    return {"status": "ok"}
+
 
 # ✅ UI route
 @ui_router.get("/", response_class=HTMLResponse)
