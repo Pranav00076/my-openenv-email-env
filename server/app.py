@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
 try:
@@ -14,8 +14,8 @@ except ModuleNotFoundError:
     from server.my_env_environment import MyEnvironment
 
 
-# Create OpenEnv app
-app = create_app(
+# ✅ Create OpenEnv app
+openenv_app = create_app(
     MyEnvironment,
     MyAction,
     MyObservation,
@@ -23,24 +23,22 @@ app = create_app(
     max_concurrent_envs=1,
 )
 
-# ✅ Create separate router (IMPORTANT)
-ui_router = APIRouter()
+# ✅ Create YOUR main app
+app = FastAPI()
 
-@app.get("/web")
-def web():
-    return {"status": "ok"}
+# ✅ Mount OpenEnv under /api
+app.mount("/api", openenv_app)
 
 
-# ✅ UI route
-@ui_router.get("/", response_class=HTMLResponse)
+# =========================
+# ✅ YOUR UI (NOW WORKS)
+# =========================
+@app.get("/", response_class=HTMLResponse)
 def home():
     return """
     <html>
-    <head>
-        <title>Email App</title>
-    </head>
     <body style="font-family: Arial; padding:20px;">
-        <h2>📧 My Email Environment</h2>
+        <h2>📧 My Email App</h2>
 
         <button onclick="resetEnv()">Reset</button>
         <button onclick="getState()">Get State</button>
@@ -49,14 +47,14 @@ def home():
 
         <script>
             async function resetEnv() {
-                const res = await fetch('/reset', { method: 'POST' });
+                const res = await fetch('/api/reset', { method: 'POST' });
                 const data = await res.json();
                 document.getElementById('output').innerText =
                     JSON.stringify(data, null, 2);
             }
 
             async function getState() {
-                const res = await fetch('/state');
+                const res = await fetch('/api/state');
                 const data = await res.json();
                 document.getElementById('output').innerText =
                     JSON.stringify(data, null, 2);
@@ -67,5 +65,7 @@ def home():
     """
 
 
-# ✅ Mount UI router LAST (critical)
-app.include_router(ui_router)
+# optional (for HF logs)
+@app.get("/web")
+def web():
+    return {"status": "ok"}
