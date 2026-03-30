@@ -5,6 +5,8 @@ WORKDIR /app
 # Copy everything
 COPY . /app
 
+RUN apt-get update && apt-get install -y git
+
 # Install deps
 RUN pip install --no-cache-dir -r requirements.txt
 
