@@ -14,7 +14,7 @@ except ModuleNotFoundError:
     from server.my_env_environment import MyEnvironment
 
 
-# ✅ Create OpenEnv app
+# ✅ OpenEnv backend
 openenv_app = create_app(
     MyEnvironment,
     MyAction,
@@ -23,18 +23,18 @@ openenv_app = create_app(
     max_concurrent_envs=1,
 )
 
-# ✅ Create YOUR main app
+# ✅ Main app
 app = FastAPI()
 
-# ✅ Mount OpenEnv under /api
+# mount backend under /api
 app.mount("/api", openenv_app)
 
 
 # =========================
-# ✅ YOUR UI (NOW WORKS)
+# ✅ THIS IS THE IMPORTANT PART
 # =========================
-@app.get("/", response_class=HTMLResponse)
-def home():
+@app.get("/web", response_class=HTMLResponse)
+def web_ui():
     return """
     <html>
     <body style="font-family: Arial; padding:20px;">
@@ -65,7 +65,7 @@ def home():
     """
 
 
-# optional (for HF logs)
-@app.get("/web")
-def web():
-    return {"status": "ok"}
+# optional root redirect
+@app.get("/")
+def root():
+    return {"message": "Go to /web"}
