@@ -107,10 +107,6 @@ class MyEnvironment(Environment):
 
         done = self._state.step_count >= 5
 
-        # print("DEBUG TASK:", self.task)
-        # print("DEBUG ACTION:", action.action_type)
-        # print("DEBUG CORRECT:", correct_label)
-
         return MyObservation(
             email=next_email,
             reward=reward,

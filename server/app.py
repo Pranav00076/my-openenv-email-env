@@ -37,25 +37,83 @@ app.mount("/api", openenv_app)
 def web_ui():
     return """
     <html>
-    <body style="font-family: Arial; padding:20px;">
-        <h2>📧 My Email App</h2>
+    <head>
+        <title>Email App</title>
+        <style>
+            body { font-family: Arial; background:#f5f7fa; padding:20px; }
+            .container { max-width: 800px; margin:auto; }
+            .card {
+                background:white;
+                padding:15px;
+                border-radius:10px;
+                box-shadow:0 2px 10px rgba(0,0,0,0.1);
+                margin-top:15px;
+            }
+            button {
+                padding:10px 15px;
+                margin:5px;
+                border:none;
+                border-radius:6px;
+                cursor:pointer;
+                background:#007bff;
+                color:white;
+            }
+            button:hover { background:#0056b3; }
+            .spam { background:#dc3545; }
+            .safe { background:#28a745; }
+            pre { background:#111; color:#0f0; padding:10px; }
+        </style>
+    </head>
 
-        <button onclick="resetEnv()">Reset</button>
-        <button onclick="getState()">Get State</button>
+    <body>
+        <div class="container">
+            <h2>📧 My Email App</h2>
 
-        <pre id="output">Click buttons...</pre>
+            <div class="card">
+                <button onclick="resetEnv()">🔄 Reset</button>
+                <button onclick="getState()">📥 Load Email</button>
+            </div>
+
+            <div class="card">
+                <h3>Email:</h3>
+                <p id="email">No email loaded</p>
+
+                <button class="spam" onclick="takeAction('mark_spam')">🚫 Mark as Spam</button>
+                <button class="safe" onclick="takeAction('keep')">✅ Keep</button>
+            </div>
+
+            <div class="card">
+                <h3>Status:</h3>
+                <pre id="output">Waiting...</pre>
+            </div>
+        </div>
 
         <script>
             async function resetEnv() {
-                const res = await fetch('/api/reset', { method: 'POST' });
-                const data = await res.json();
-                document.getElementById('output').innerText =
-                    JSON.stringify(data, null, 2);
+                await fetch('/api/reset', { method: 'POST' });
+                getState();
             }
 
             async function getState() {
                 const res = await fetch('/api/state');
                 const data = await res.json();
+
+                document.getElementById('email').innerText =
+                    data.observation.email;
+
+                document.getElementById('output').innerText =
+                    JSON.stringify(data, null, 2);
+            }
+
+            async function takeAction(action) {
+                const res = await fetch('/api/step', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: action })
+                });
+
+                const data = await res.json();
+
                 document.getElementById('output').innerText =
                     JSON.stringify(data, null, 2);
             }
@@ -63,7 +121,6 @@ def web_ui():
     </body>
     </html>
     """
-
 
 # optional root redirect
 @app.get("/")
