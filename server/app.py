@@ -90,16 +90,27 @@ def web_ui():
 
         <script>
             async function resetEnv() {
-                await fetch('/api/reset', { method: 'POST' });
-                getState();
+                const res = await fetch('/api/reset', { method: 'POST' });
+                const data = await res.json();
+
+                document.getElementById('email').innerText =
+                    data.observation.email;
+
+                document.getElementById('output').innerText =
+                    JSON.stringify(data, null, 2);
             }
 
             async function getState() {
                 const res = await fetch('/api/state');
                 const data = await res.json();
 
-                document.getElementById('email').innerText =
-                    data.observation.email;
+                if (data.observation && data.observation.email) {
+                    document.getElementById('email').innerText =
+                        data.observation.email;
+                } else {
+                    document.getElementById('email').innerText =
+                        "⚠️ No email in state (click Reset)";
+                }
 
                 document.getElementById('output').innerText =
                     JSON.stringify(data, null, 2);
