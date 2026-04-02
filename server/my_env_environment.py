@@ -52,19 +52,19 @@ class MyEnvironment(Environment):
         self._state.step_count += 1
 
         emails = get_emails()
+
         email_data = next(
             (e for e in emails if e["text"] == self._state.email),
             {}
         )
 
-        # find correct label
         correct_label = next(
             (e["label"] for e in emails
-             if e["text"].lower().strip() == self._state.email.lower().strip()),
+            if e["text"].lower().strip() == self._state.email.lower().strip()),
             "unknown"
         )
-        # determine correctness and compute reward consistently
-        # Base correctness
+
+        # ✅ correctness
         is_correct = action.action_type == correct_label
 
         reward = 0.0
@@ -72,34 +72,30 @@ class MyEnvironment(Environment):
         # ✅ base reward
         reward += 1.0 if is_correct else -0.5
 
-        # ✅ bonus: spam detection with link
+        # ✅ bonus: spam with link
         if correct_label == "spam" and email_data.get("has_link"):
             if action.action_type == "spam":
                 reward += 0.5
 
-        # ✅ bonus: urgent important emails
+        # ✅ bonus: urgent important
         if correct_label == "important" and email_data.get("urgency", 0) > 0.8:
             if action.action_type == "important":
                 reward += 0.5
 
-        # ❌ penalty: missing urgent email
+        # ❌ penalty: missed urgent
         if correct_label == "important" and action.action_type != "important":
             if email_data.get("urgency", 0) > 0.8:
                 reward -= 1.0
 
-        # 🔥 streak bonus (VERY IMPORTANT)
+        # ✅ streak system (FIXED)
         if is_correct:
             self._state.streak += 1
             reward += 0.1 * self._state.streak
         else:
             self._state.streak = 0
-        # update streak
-        if correct:
-            self.streak += 1
-        else:
-            self.streak = 0
 
-        reward += 0.1 * self.streak
+        # DEBUG (optional but useful)
+        print(f"Action: {action.action_type}, Correct: {correct_label}, Reward: {reward}")
 
         # next email
         next_email = random.choice(emails)["text"]

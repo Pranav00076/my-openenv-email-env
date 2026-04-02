@@ -111,7 +111,7 @@ def web_ui():
                     document.getElementById('email').innerText =
                         "⚠️ No email in state (click Reset)";
                 }
-
+ 
                 document.getElementById('output').innerText =
                     JSON.stringify(data, null, 2);
             }
