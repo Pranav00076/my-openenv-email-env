@@ -78,8 +78,12 @@ def web_ui():
                 <h3>Email:</h3>
                 <p id="email">No email loaded</p>
 
-                <button class="spam" onclick="takeAction('mark_spam')">🚫 Mark as Spam</button>
-                <button class="safe" onclick="takeAction('keep')">✅ Keep</button>
+                <button class="spam" onclick="takeAction('spam')">🚫 Mark as Spam</button>
+                <button class="safe" onclick="takeAction('important')">✅ Keep</button>
+            </div>
+
+            <div class="card">
+                <h3>Reward: <span id="reward_score">0.0</span></h3>
             </div>
 
             <div class="card">
@@ -93,8 +97,10 @@ def web_ui():
                 const res = await fetch('/api/reset', { method: 'POST' });
                 const data = await res.json();
 
-                document.getElementById('email').innerText =
-                    data.observation.email;
+                if (data.observation && data.observation.email) {
+                    document.getElementById('email').innerText = data.observation.email;
+                    document.getElementById('reward_score').innerText = data.observation.reward !== undefined ? data.observation.reward : 0.0;
+                }
 
                 document.getElementById('output').innerText =
                     JSON.stringify(data, null, 2);
@@ -107,9 +113,11 @@ def web_ui():
                 if (data.observation && data.observation.email) {
                     document.getElementById('email').innerText =
                         data.observation.email;
+                    document.getElementById('reward_score').innerText = data.observation.reward !== undefined ? data.observation.reward : 0.0;
                 } else {
                     document.getElementById('email').innerText =
                         "⚠️ No email in state (click Reset)";
+                    document.getElementById('reward_score').innerText = "0.0";
                 }
  
                 document.getElementById('output').innerText =
@@ -120,10 +128,21 @@ def web_ui():
                 const res = await fetch('/api/step', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: action })
+                    body: JSON.stringify({ action_type: action })
                 });
 
                 const data = await res.json();
+
+                if (data.observation) {
+                    if (data.observation.email) {
+                        document.getElementById('email').innerText = data.observation.email;
+                    }
+                    if (data.observation.reward !== undefined) {
+                        document.getElementById('reward_score').innerText = data.observation.reward;
+                    }
+                } else if (data.reward !== undefined) {
+                    document.getElementById('reward_score').innerText = data.reward;
+                }
 
                 document.getElementById('output').innerText =
                     JSON.stringify(data, null, 2);
