@@ -128,7 +128,7 @@ def web_ui():
                 const res = await fetch('/api/step', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action_type: action })
+                    body: JSON.stringify({ action: { action_type: action } })
                 });
 
                 const data = await res.json();
