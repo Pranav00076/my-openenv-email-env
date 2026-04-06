@@ -15,7 +15,7 @@ except ImportError:
 
 class MyEnvironment(Environment):
 
-    SUPPORTS_CONCURRENT_SESSIONS: bool = True
+    SUPPORTS_CONCURRENT_SESSIONS: bool = False
 
     def __init__(self):
         self._state = State(

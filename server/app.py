@@ -94,7 +94,7 @@ def web_ui():
 
         <script>
             async function resetEnv() {
-                const res = await fetch('/api/reset', { method: 'POST' });
+                const res = await fetch('/api/reset', { method: 'POST', credentials: 'same-origin' });
                 const data = await res.json();
 
                 if (data.observation && data.observation.email) {
@@ -107,7 +107,7 @@ def web_ui():
             }
 
             async function getState() {
-                const res = await fetch('/api/state');
+                const res = await fetch('/api/state', { credentials: 'same-origin' });
                 const data = await res.json();
 
                 if (data.observation && data.observation.email) {
@@ -127,6 +127,7 @@ def web_ui():
             async function takeAction(action) {
                 const res = await fetch('/api/step', {
                     method: 'POST',
+                    credentials: 'same-origin',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: { action_type: action } })
                 });
