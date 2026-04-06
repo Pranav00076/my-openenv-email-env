@@ -53,11 +53,13 @@ def load_from_csv():
 
 # 🔹 Hybrid loader
 def get_emails():
-    emails = load_from_gmail()
-
+    # Prefer CSV for consistent grading labels (spam/important)
+    emails = load_from_csv()
     if emails and len(emails) > 0:
-        print("📩 Using Gmail data")
+        # print("📄 Using CSV dataset")
         return emails
 
-    print("📄 Using CSV dataset")
-    return load_from_csv()
+    # Fallback to Gmail (if no CSV or empty)
+    # Caution: Gmail emails will have "unknown" labels
+    print("📩 Falling back to Gmail data")
+    return load_from_gmail()

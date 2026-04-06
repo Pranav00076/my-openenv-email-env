@@ -5,12 +5,11 @@ from uuid import uuid4
 
 from email_loader import get_emails
 from openenv.core.env_server.interfaces import Environment
-from openenv.core.env_server.types import State
 
 try:
-    from ..models import MyAction, MyObservation
+    from ..models import MyAction, MyObservation, State
 except ImportError:
-    from models import MyAction, MyObservation
+    from models import MyAction, MyObservation, State
 
 
 
@@ -19,11 +18,13 @@ class MyEnvironment(Environment):
     SUPPORTS_CONCURRENT_SESSIONS: bool = True
 
     def __init__(self):
-        self._state = State(episode_id=str(uuid4()), step_count=0)
+        self._state = State(
+            episode_id=str(uuid4()),
+            email="",
+            step_count=0,
+            streak=0
+        )
         self.task = "easy"  # default task
-        self._state.email = ""
-        # track consecutive correct answers
-        self.streak = 0
 
     def reset(self) -> MyObservation:
         # pick a task first, then sample an email from that task
@@ -34,12 +35,10 @@ class MyEnvironment(Environment):
 
         self._state = State(
             episode_id=str(uuid4()),
+            email=email["text"],
             step_count=0,
+            streak=0
         )
-        self._state.email = email["text"]
-
-        # reset streak on new episode
-        self._state.streak = 0
 
         return MyObservation(
             email=email["text"],
