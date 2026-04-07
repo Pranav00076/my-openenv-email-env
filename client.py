@@ -18,8 +18,6 @@ import random
 
 from grader import grade_episode
 
-from transformers import pipeline
-classifier = pipeline("text-classification", model="distilbert-base-uncased")
 
 class MyEnv(
     EnvClient[MyAction, MyObservation, State]

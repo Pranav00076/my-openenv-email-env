@@ -12,6 +12,34 @@ except ImportError:
     from models import MyAction, MyObservation, State
 
 
+# ─── Task difficulty configurations ───
+TASK_CONFIG = {
+    "easy": {
+        "max_steps": 3,
+        "base_correct": 1.0,
+        "base_incorrect": -0.25,
+        "bonus_multiplier": 1.0,
+        "streak_enabled": True,
+        "filter_obvious": True,       # only high-signal emails
+    },
+    "medium": {
+        "max_steps": 5,
+        "base_correct": 1.0,
+        "base_incorrect": -0.5,
+        "bonus_multiplier": 1.0,
+        "streak_enabled": True,
+        "filter_obvious": False,      # all emails
+    },
+    "hard": {
+        "max_steps": 7,
+        "base_correct": 0.5,
+        "base_incorrect": -1.0,
+        "bonus_multiplier": 0.5,      # halved bonuses
+        "streak_enabled": False,      # no streak bonus
+        "filter_obvious": False,      # all emails
+    },
+}
+
 
 class MyEnvironment(Environment):
 
@@ -26,11 +54,33 @@ class MyEnvironment(Environment):
         )
         self.task = "easy"  # default task
 
+    # ─── helpers ───
+
+    def _get_config(self) -> dict:
+        return TASK_CONFIG.get(self.task, TASK_CONFIG["medium"])
+
+    def _get_task_emails(self) -> list:
+        """Return emails filtered by task difficulty."""
+        emails = get_emails()
+        cfg = self._get_config()
+
+        if cfg["filter_obvious"]:
+            # Easy: only emails with strong classification signals
+            obvious = [
+                e for e in emails
+                if (e["label"] == "spam" and e.get("has_link"))
+                or (e["label"] == "important" and e.get("urgency", 0) >= 0.8)
+            ]
+            return obvious if obvious else emails  # fallback safety
+
+        return emails
+
+    # ─── OpenEnv interface ───
+
     def reset(self) -> MyObservation:
-        # pick a task first, then sample an email from that task
         self.task = random.choice(["easy", "medium", "hard"])
 
-        emails = get_emails()
+        emails = self._get_task_emails()
         email = random.choice(emails)
 
         self._state = State(
@@ -49,58 +99,59 @@ class MyEnvironment(Environment):
 
     def step(self, action: MyAction) -> MyObservation:
         self._state.step_count += 1
+        cfg = self._get_config()
 
         emails = get_emails()
+
+        correct_label = next(
+            (e["label"] for e in emails
+             if e["text"].lower().strip() == self._state.email.lower().strip()),
+            "unknown"
+        )
 
         email_data = next(
             (e for e in emails if e["text"] == self._state.email),
             {}
         )
 
-        correct_label = next(
-            (e["label"] for e in emails
-            if e["text"].lower().strip() == self._state.email.lower().strip()),
-            "unknown"
-        )
-
-        # ✅ correctness
+        # ── correctness ──
         is_correct = action.action_type == correct_label
 
-        reward = 0.0
+        # ── base reward (varies by task) ──
+        reward = cfg["base_correct"] if is_correct else cfg["base_incorrect"]
 
-        # ✅ base reward
-        reward += 1.0 if is_correct else -0.5
-
-        # ✅ bonus: spam with link
+        # ── bonus: spam with link (scaled by task) ──
         if correct_label == "spam" and email_data.get("has_link"):
             if action.action_type == "spam":
-                reward += 0.5
+                reward += 0.5 * cfg["bonus_multiplier"]
 
-        # ✅ bonus: urgent important
+        # ── bonus: urgent important (scaled by task) ──
         if correct_label == "important" and email_data.get("urgency", 0) > 0.8:
             if action.action_type == "important":
-                reward += 0.5
+                reward += 0.5 * cfg["bonus_multiplier"]
 
-        # ❌ penalty: missed urgent
+        # ── penalty: missed urgent ──
         if correct_label == "important" and action.action_type != "important":
             if email_data.get("urgency", 0) > 0.8:
                 reward -= 1.0
 
-        # ✅ streak system (FIXED)
+        # ── streak system (disabled in hard mode) ──
         if is_correct:
             self._state.streak += 1
-            reward += 0.1 * self._state.streak
+            if cfg["streak_enabled"]:
+                reward += 0.1 * self._state.streak
         else:
             self._state.streak = 0
 
-        # DEBUG (optional but useful)
-        print(f"Action: {action.action_type}, Correct: {correct_label}, Reward: {reward}")
+        # DEBUG
+        print(f"[{self.task}] Action: {action.action_type}, Correct: {correct_label}, Reward: {reward}")
 
-        # next email
-        next_email = random.choice(emails)["text"]
+        # ── next email ──
+        task_emails = self._get_task_emails()
+        next_email = random.choice(task_emails)["text"]
         self._state.email = next_email
 
-        done = self._state.step_count >= 5
+        done = self._state.step_count >= cfg["max_steps"]
 
         return MyObservation(
             email=next_email,
