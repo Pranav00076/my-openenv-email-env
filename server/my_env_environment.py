@@ -1,3 +1,4 @@
+import os
 import random
 random.seed(42)
 
@@ -11,6 +12,9 @@ try:
 except ImportError:
     from models import MyAction, MyObservation, State
 
+
+# ─── Task override (set via /set_task endpoint or OPENENV_TASK env var) ───
+_FORCED_TASK = os.getenv("OPENENV_TASK", None)
 
 # ─── Task difficulty configurations ───
 TASK_CONFIG = {
@@ -78,7 +82,11 @@ class MyEnvironment(Environment):
     # ─── OpenEnv interface ───
 
     def reset(self) -> MyObservation:
-        self.task = random.choice(["easy", "medium", "hard"])
+        global _FORCED_TASK
+        if _FORCED_TASK and _FORCED_TASK in TASK_CONFIG:
+            self.task = _FORCED_TASK
+        else:
+            self.task = random.choice(["easy", "medium", "hard"])
 
         emails = self._get_task_emails()
         email = random.choice(emails)

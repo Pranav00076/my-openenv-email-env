@@ -1,3 +1,5 @@
+import sys
+
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
@@ -152,6 +154,16 @@ def web_ui():
     </body>
     </html>
     """
+
+# ─── task selection endpoint (for inference.py) ───
+@app.post("/set_task/{task}")
+def set_task(task: str):
+    env_mod = sys.modules.get(MyEnvironment.__module__)
+    if env_mod and task in ("easy", "medium", "hard"):
+        env_mod._FORCED_TASK = task
+        return {"task": task, "status": "ok"}
+    return {"error": f"invalid task: {task}", "valid": ["easy", "medium", "hard"]}
+
 
 # optional root redirect
 @app.get("/")
